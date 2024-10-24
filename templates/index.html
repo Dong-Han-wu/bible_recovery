@@ -1,15 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>下載 bible recovery version xlsx</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strong's Number Scraper</title>
 </head>
 <body>
-    <section class="section">
-        <div class="container">
-            <h1 class="title">下載 Bible Recovery Version Xlsx</h1>
-            <a class="button is-primary" href="/download">點我下載</a>
-        </div>
-    </section>
+    <h1>Strong's Number Scraper</h1>
+    <form method="post">
+        <label for="strong_number">輸入 Strong's 編號：</label>
+        <input type="text" id="strong_number" name="strong_number" required>
+        <input type="submit" value="抓取">
+    </form>
+
+    <h2>日誌：</h2>
+    <ul>
+        {% for entry in log %}
+            <li>{{ entry }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>下載 CSV 文件：</h2>
+    <a href="/download">下載 greek.csv</a>
 </body>
 </html>
