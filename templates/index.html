@@ -4,23 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strong's Number Scraper</title>
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <style>
+        body {
+            background-color: #ffeb3b; /* 黃色背景 */
+        }
+        .container {
+            text-align: center; /* 置中 */
+            margin-top: 50px;
+        }
+        .icon {
+            font-size: 2em; /* 圖示大小 */
+            color: #333; /* 圖示顏色 */
+        }
+    </style>
 </head>
 <body>
-    <h1>Strong's Number Scraper</h1>
-    <form method="post">
-        <label for="strong_number">輸入 Strong's 編號：</label>
-        <input type="text" id="strong_number" name="strong_number" required>
-        <input type="submit" value="抓取">
-    </form>
+    <div class="container">
+        <h1 class="title">Strong's Number Scraper</h1>
+        <form method="post">
+            <div class="field">
+                <label class="label" for="strong_number">輸入 Strong's 編號：</label>
+                <div class="control">
+                    <input class="input" type="text" id="strong_number" name="strong_number" required>
+                </div>
+            </div>
+            <div class="control">
+                <input class="button is-primary" type="submit" value="抓取">
+            </div>
+        </form>
 
-    <h2>日誌：</h2>
-    <ul>
-        {% for entry in log %}
-            <li>{{ entry }}</li>
-        {% endfor %}
-    </ul>
+        <h2 class="subtitle">日誌：</h2>
+        <ul>
+            {% for entry in log %}
+                <li>{{ entry }}</li>
+            {% endfor %}
+        </ul>
 
-    <h2>下載 CSV 文件：</h2>
-    <a href="/download">下載 greek.csv</a>
+        <h2 class="subtitle">下載 CSV 文件：</h2>
+        <a class="button is-link" href="/download">下載 greek.csv</a>
+        
+        <!-- 希臘文圖示 -->
+        <div class="icon">
+            <i class="fas fa-greek"></i> <!-- 這裡您可以使用 Font Awesome 或其他圖示庫 -->
+        </div>
+    </div>
+
+    <!-- Font Awesome (如果需要希臘文圖示) -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
