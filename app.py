@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, session
 import requests
 from bs4 import BeautifulSoup
 import ftfy
@@ -6,8 +6,12 @@ import csv
 import io
 from collections import OrderedDict
 from urllib import parse
+import os
 
 app = Flask(__name__)
+
+# 設置 secret_key，用來保護會話數據
+app.secret_key = os.environ.get('SECRET_KEY', 'c39d30250886683bb76dd273a19e952a')
 
 # 書名對應的縮寫
 book_abbreviations = {
@@ -39,8 +43,7 @@ book_abbreviations = {
     "Revelation": "Rv"
 }
 
-
-# 根路由
+# 根路由，顯示表單並處理提交
 @app.route('/', methods=['GET', 'POST'])
 def index():
     log = []
@@ -80,36 +83,35 @@ def index():
             # 移除重複項
             final_list = list(OrderedDict.fromkeys(my_list2))
 
-            # Step 3: 使用 io.StringIO 作為內存中的 CSV 文件
-            output = io.StringIO()
-            wr = csv.writer(output, quoting=csv.QUOTE_ALL)
-            for item in final_list:
-                wr.writerow([item])  # 將每個項目寫入同一欄位但不同列中
-            output.seek(0)  # 確保緩衝區指向起始位置
+            # 將結果存入session供下載使用
+            session['final_list'] = final_list
 
-            log.append(f'Successfully created CSV in memory')
+            log.append(f'Successfully processed data for download')
 
     return render_template('index.html', log=log)
 
-
+# 文件下載路由
 @app.route('/download')
 def download():
-    # Create the in-memory file again when the user wants to download
+    # 從session中取出處理好的數據
+    final_list = session.get('final_list', [])
+
+    if not final_list:
+        return "No data available for download", 400
+
+    # 使用 io.StringIO 作為內存中的 CSV 文件
     output = io.StringIO()
     wr = csv.writer(output, quoting=csv.QUOTE_ALL)
-    
-    # Simulated final_list for demonstration purposes (replace with actual data)
-    final_list = ['Example Row 1', 'Example Row 2', 'Example Row 3']
-    
-    for item in final_list:
-        wr.writerow([item])
-    output.seek(0)  # Ensure we're at the start of the StringIO buffer
 
+    for item in final_list:
+        wr.writerow([item])  # 將每個項目寫入同一欄位但不同列中
+    output.seek(0)  # 確保緩衝區指向起始位置
+
+    # 將CSV文件發送給用戶下載
     return send_file(io.BytesIO(output.getvalue().encode('utf-8-sig')),
                      as_attachment=True,
                      download_name='greek.csv',
                      mimetype='text/csv')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
