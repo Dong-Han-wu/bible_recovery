@@ -8,7 +8,11 @@
   ],
   "routes": [
     {
-      "src": "/api/scrape",
+      "src": "/download",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/",
       "dest": "/api/app.py"
     }
   ]
