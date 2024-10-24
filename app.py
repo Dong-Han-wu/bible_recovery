@@ -42,7 +42,31 @@ def scrape_verses(book_code, chapter):
 books = {
     "40_Matthew": "馬太福音",
     "41_Mark": "馬可福音",
-    # ... 其他書籍
+    "42_Luke": "路加福音",
+    "43_John": "約翰福音",
+    "44_Acts": "使徒行傳",
+    "45_Romans": "羅馬書",
+    "46_1Corinthians": "哥林多前書",
+    "47_2Corinthians": "哥林多後書",
+    "48_Galatians": "加拉太書",
+    "49_Ephesians": "以弗所書",
+    "50_Philippians": "腓立比書",
+    "51_Colossians": "歌羅西書",
+    "52_1Thessalonians": "帖撒羅尼迦前書",
+    "53_2Thessalonians": "帖撒羅尼迦後書",
+    "54_1Timothy": "提摩太前書",
+    "55_2Timothy": "提摩太後書",
+    "56_Titus": "提多書",
+    "57_Philemon": "腓利門書",
+    "58_Hebrews": "希伯來書",
+    "59_James": "雅各書",
+    "60_1Peter": "彼得前書",
+    "61_2Peter": "彼得後書",
+    "62_1John": "約翰壹書",
+    "63_2John": "約翰貳書",
+    "64_3John": "約翰參書",
+    "65_Jude": "猶大書",
+    "66_Revelation": "啟示錄"
 }
 
 @app.route('/')
