@@ -1,114 +1,110 @@
-from flask import Flask, render_template, send_file
+from flask import Flask, render_template, request, send_file
 import requests
 from bs4 import BeautifulSoup
-import openpyxl
-from io import BytesIO
+import ftfy
+import csv
+import codecs
+from collections import OrderedDict
+from urllib import parse
+import os
 
 app = Flask(__name__)
 
-
-# 爬取函數
-def get_chapter_links(book_code):
-    url = f"https://text.recoveryversion.bible/{book_code}_1.htm"
-    response = requests.get(url)
-    chapter_links = []
-
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        chapter_elements = soup.select('.chapter-links a')
-
-        if not chapter_elements:
-            chapter_links.append((book_code, "1"))
-        else:
-            for chapter in chapter_elements:
-                chapter_num = chapter.text
-                chapter_links.append((book_code, chapter_num))
-    return chapter_links
-
-
-def scrape_verses(book_code, chapter):
-    url = f"https://text.recoveryversion.bible/{book_code}_{chapter}.htm"
-    response = requests.get(url)
-
-    verses = []
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        verse_elements = soup.select('p.verse')
-
-        for verse in verse_elements:
-            verse_text = verse.get_text(strip=True)
-            verses.append(verse_text)
-    return verses
-
-
-# 書名和代碼
-books = {
-    "40_Matthew": "馬太福音",
-    "41_Mark": "馬可福音",
-    "42_Luke": "路加福音",
-    "43_John": "約翰福音",
-    "44_Acts": "使徒行傳",
-    "45_Romans": "羅馬書",
-    "46_1Corinthians": "哥林多前書",
-    "47_2Corinthians": "哥林多後書",
-    "48_Galatians": "加拉太書",
-    "49_Ephesians": "以弗所書",
-    "50_Philippians": "腓立比書",
-    "51_Colossians": "歌羅西書",
-    "52_1Thessalonians": "帖撒羅尼迦前書",
-    "53_2Thessalonians": "帖撒羅尼迦後書",
-    "54_1Timothy": "提摩太前書",
-    "55_2Timothy": "提摩太後書",
-    "56_Titus": "提多書",
-    "57_Philemon": "腓利門書",
-    "58_Hebrews": "希伯來書",
-    "59_James": "雅各書",
-    "60_1Peter": "彼得前書",
-    "61_2Peter": "彼得後書",
-    "62_1John": "約翰壹書",
-    "63_2John": "約翰貳書",
-    "64_3John": "約翰參書",
-    "65_Jude": "猶大書",
-    "66_Revelation": "啟示錄"
+# 書名對應的縮寫
+book_abbreviations = {
+    "Matthew": "Mt",
+    "Mark": "Mk",
+    "Luke": "Lk",
+    "John": "Jn",
+    "Acts": "Ac",
+    "Romans": "Rm",
+    "1 Corinthians": "1C",
+    "2 Corinthians": "2C",
+    "Galatians": "Ga",
+    "Ephesians": "Ep",
+    "Philippians": "Pp",
+    "Colossians": "Co",
+    "1 Thessalonians": "1T",
+    "2 Thessalonians": "2T",
+    "1 Timothy": "1T",
+    "2 Timothy": "2T",
+    "Titus": "Tt",
+    "Hebrews": "He",
+    "James": "Ja",
+    "1 Peter": "1P",
+    "2 Peter": "2P",
+    "1 John": "1J",
+    "2 John": "2J",
+    "3 John": "3J",
+    "Jude": "Jd",
+    "Revelation": "Rv"
 }
 
 
-@app.route('/')  # 根路由
+# 根路由
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')  # 渲染模板
+    log = []
+    if request.method == 'POST':
+        strong_number = request.form.get('strong_number')
+        url = f'https://biblehub.com/greek/strongs_{strong_number}.htm'
+        s = requests.session()
+        response = s.get(url)
+        log.append(
+            f'Requesting URL: {url} - Status Code: {response.status_code}')
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            my_list = []
+            for a in soup.find_all('a'):
+                if "/greek" in a['href'] and f"_{strong_number}.htm" in a[
+                        'href']:
+                    my_list.append("https://biblehub.com" +
+                                   parse.unquote(a['href']))
+
+            my_list2 = []
+            for greek in my_list:
+                webPage3 = requests.get(greek)
+                soup = BeautifulSoup(webPage3.text, 'html.parser')
+                p_tag = soup.find_all("span", class_='encycheading')
+                for item in p_tag:
+                    greek_text = ftfy.fix_text(item.text)
+                    my_list2.append(greek_text)
+
+                for a in soup.find_all('a'):
+                    verse_text = a.string
+                    if "/text/" in a['href'] or "abbrev.htm" in a['href']:
+                        my_list2.append(verse_text)
+
+            # 替換書名為縮寫
+            for i in range(len(my_list2)):
+                for full_name, abbreviation in book_abbreviations.items():
+                    my_list2[i] = my_list2[i].replace(full_name, abbreviation)
+
+            # 移除重複項
+            final_list = list(OrderedDict.fromkeys(my_list2))
+
+            # Step 3: 開啟 CSV 文件以寫入
+            csv_file_path = 'greek.csv'
+            with codecs.open(csv_file_path, 'w',
+                             encoding='utf-8-sig') as myfile:
+                wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+                for item in final_list:
+                    wr.writerow([item])  # 將每個項目寫入同一欄位但不同列中
+
+            log.append(f'Successfully created {csv_file_path}')
+
+    return render_template('index.html', log=log)
 
 
-@app.route('/download')  # 下載路由
+@app.route('/download')
 def download():
-    # 建立 Excel 文件
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Bible Verses"
-
-    # 寫入表頭
-    ws.append(['Chapter', 'Verse'])
-
-    # 爬取所有書的經文
-    for book_code, book_name in books.items():
-        chapter_links = get_chapter_links(book_code)
-        for _, chapter in chapter_links:
-            verses = scrape_verses(book_code, chapter)
-            for verse in verses:
-                ws.append([f"{book_name} {chapter}", verse])
-
-    # 將 Excel 保存到 BytesIO 中
-    file_stream = BytesIO()
-    wb.save(file_stream)
-    file_stream.seek(0)
-
-    # 下載 Excel 文件
-    return send_file(
-        file_stream,
-        as_attachment=True,
-        download_name='bible_recovery_version.xlsx',
-        mimetype=
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    csv_file_path = 'greek.csv'
+    return send_file(csv_file_path,
+                     as_attachment=True,
+                     download_name='greek.csv',
+                     mimetype='text/csv')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)  # 啟動應用程式
+    app.run(debug=True)
