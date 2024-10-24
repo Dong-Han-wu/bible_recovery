@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/api/scrape",
-      "dest": "app.py"
+      "dest": "/api/app.py"
     }
   ]
 }
