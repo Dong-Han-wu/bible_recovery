@@ -6,7 +6,8 @@ from io import BytesIO
 
 app = Flask(__name__)
 
-# 你的書籍資料和爬取函數
+
+# 爬取函數
 def get_chapter_links(book_code):
     url = f"https://text.recoveryversion.bible/{book_code}_1.htm"
     response = requests.get(url)
@@ -24,6 +25,7 @@ def get_chapter_links(book_code):
                 chapter_links.append((book_code, chapter_num))
     return chapter_links
 
+
 def scrape_verses(book_code, chapter):
     url = f"https://text.recoveryversion.bible/{book_code}_{chapter}.htm"
     response = requests.get(url)
@@ -37,6 +39,7 @@ def scrape_verses(book_code, chapter):
             verse_text = verse.get_text(strip=True)
             verses.append(verse_text)
     return verses
+
 
 # 書名和代碼
 books = {
@@ -69,20 +72,22 @@ books = {
     "66_Revelation": "啟示錄"
 }
 
-@app.route('/')
-def index():
-    return render_template('index.html')
 
-@app.route('/download')
+@app.route('/')  # 根路由
+def index():
+    return render_template('index.html')  # 渲染模板
+
+
+@app.route('/download')  # 下載路由
 def download():
     # 建立 Excel 文件
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Bible Verses"
-    
+
     # 寫入表頭
     ws.append(['Chapter', 'Verse'])
-    
+
     # 爬取所有書的經文
     for book_code, book_name in books.items():
         chapter_links = get_chapter_links(book_code)
@@ -97,7 +102,13 @@ def download():
     file_stream.seek(0)
 
     # 下載 Excel 文件
-    return send_file(file_stream, as_attachment=True, download_name='bible_recovery_version.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name='bible_recovery_version.xlsx',
+        mimetype=
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True)  # 啟動應用程式
